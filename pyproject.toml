@@ -1,7 +1,7 @@
 [project]
 name = "flounder"
 version = "0.1.0"
-description = "WhatsApp Link Agent - Digests shared links and categorizes them into Google Sheets"
+description = "Mobile link agent - Paste links, classify with Claude, save to Google Sheets"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"

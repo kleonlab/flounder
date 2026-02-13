@@ -1,98 +1,76 @@
-# Flounder — WhatsApp Link Agent
+# Flounder
 
-Flounder watches a WhatsApp group for shared links, fetches and digests
-their content, classifies each link into a user-defined bucket using Claude,
-and logs everything to a Google Sheet (one tab per bucket).
+A phone-friendly web app for saving and classifying links. Paste a link (or share it
+directly from any app), add an optional note, and Flounder uses Claude to classify it
+into your custom buckets and logs everything to a Google Sheet.
 
 ## How it works
 
 ```
-WhatsApp Group → Meta Webhook → Flounder API
-                                   ├─ Fetch & extract page content
-                                   ├─ Classify with Claude (bucket + summary + action)
-                                   └─ Append row to Google Sheet tab
+You paste/share a link  →  Flounder fetches the page
+                           →  Claude classifies it into a bucket
+                           →  Row added to your Google Sheet (one tab per bucket)
 ```
 
-## Quickstart
+Works as a **PWA** — add it to your home screen on iPhone or Android and it
+behaves like a native app. Supports **Share Target** so you can share links
+from WhatsApp, Safari, Chrome, etc. directly into Flounder.
 
-### 1. Prerequisites
+## Setup
 
-- Python 3.11+
-- A [Meta Developer](https://developers.facebook.com/) app with WhatsApp Cloud API enabled
-- A [Google Cloud service account](https://console.cloud.google.com/) with Sheets API access
-- An [Anthropic API key](https://console.anthropic.com/)
-
-### 2. Install
+### 1. Install
 
 ```bash
 pip install -e .
 ```
 
-### 3. Configure
+### 2. Configure
 
 ```bash
 cp .env.example .env
-# Fill in your API keys and settings
 ```
 
-| Variable | Description |
+Fill in three things:
+
+| Variable | Where to get it |
 |---|---|
-| `WHATSAPP_VERIFY_TOKEN` | Any secret string — used to verify the Meta webhook |
-| `WHATSAPP_API_TOKEN` | Your WhatsApp Cloud API access token |
-| `WHATSAPP_PHONE_NUMBER_ID` | The phone number ID from Meta dashboard |
-| `ANTHROPIC_API_KEY` | Your Anthropic API key |
-| `GOOGLE_SHEETS_ID` | The spreadsheet ID from the Google Sheets URL |
-| `GOOGLE_SERVICE_ACCOUNT_FILE` | Path to the service-account JSON key |
-| `BUCKETS` | Comma-separated category names (e.g. `Tech,Finance,Health,News,Other`) |
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com/) |
+| `GOOGLE_SHEETS_ID` | Create a Google Sheet, copy the ID from the URL |
+| `GOOGLE_SERVICE_ACCOUNT_FILE` | [Google Cloud Console](https://console.cloud.google.com/) → Service Account → JSON key |
 
-### 4. Google Sheets setup
+Then share the Google Sheet with the service account email (Editor access).
 
-1. Create a new Google Sheet.
-2. Share it with your service account email (the `client_email` in your JSON key file) — give **Editor** access.
-3. Copy the spreadsheet ID from the URL and put it in `.env`.
+### 3. Set your buckets
 
-Flounder will automatically create a tab for each bucket on first use.
+Edit `BUCKETS` in `.env` — comma-separated categories:
 
-### 5. Run
+```
+BUCKETS=Tech,Finance,Health,News,Shopping,Travel,Other
+```
+
+Each bucket becomes a tab in the spreadsheet. Claude uses these names to
+classify links, so pick clear, descriptive names.
+
+### 4. Run
 
 ```bash
 uvicorn flounder.app:app --host 0.0.0.0 --port 8000
 ```
 
-For local development, expose the server with [ngrok](https://ngrok.com/):
+Open `http://localhost:8000` on your phone (or deploy and use HTTPS).
 
-```bash
-ngrok http 8000
-```
+### 5. Add to home screen (PWA)
 
-Then set the webhook URL in your Meta app to `https://<ngrok-url>/webhook`.
+- **iPhone**: Safari → Share → "Add to Home Screen"
+- **Android**: Chrome → menu → "Add to Home screen" or "Install app"
 
-### 6. WhatsApp webhook setup
-
-1. Go to your Meta app → WhatsApp → Configuration.
-2. Set **Callback URL** to `https://your-domain/webhook`.
-3. Set **Verify Token** to the same value as `WHATSAPP_VERIFY_TOKEN` in `.env`.
-4. Subscribe to the `messages` webhook field.
-5. Add your WhatsApp bot number to the group you want to monitor.
-
-## Customising buckets
-
-Edit the `BUCKETS` variable in `.env`. Each bucket becomes a separate tab
-in your Google Sheet. Claude uses these bucket names when classifying links,
-so use descriptive names.
-
-Example:
-
-```
-BUCKETS=AI/ML,Frontend,Backend,DevOps,Design,Career,Other
-```
+Once installed, you can share links from **any app** (WhatsApp, browser, etc.)
+directly to Flounder using the system share sheet.
 
 ## Google Sheet output
-
-Each bucket tab has these columns:
 
 | Timestamp | Bucket | URL | Title | Summary | Action | Shared By | Group |
 |---|---|---|---|---|---|---|---|
 
-- **Summary** — one-line description of the page content
-- **Action** — suggested next step (e.g. "Read later", "Share with team")
+- **Summary** — one-line description of the page
+- **Action** — suggested next step ("Read later", "Share with team", etc.)

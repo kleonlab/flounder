@@ -24,6 +24,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
 Title: {content.get('title', '')}
 Description: {content.get('description', '')}
 URL: {content.get('url', '')}
+User note: {content.get('note', '(none)')}
 Body (truncated):
 {content.get('body', '')[:6000]}
 """
